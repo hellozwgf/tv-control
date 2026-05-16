@@ -5,30 +5,13 @@
     android:layout_height="match_parent"
     android:background="@android:color/black">
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/pairingCode"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:orientation="vertical"
-        android:gravity="center">
-
-        <TextView
-            android:id="@+id/pairingCode"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="正在连接..."
-            android:textColor="@android:color/white"
-            android:textSize="48sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/pairingHint"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="配对码"
-            android:textColor="@android:color/darker_gray"
-            android:textSize="18sp" />
-
-    </LinearLayout>
+        android:text="正在连接..."
+        android:textColor="@android:color/white"
+        android:textSize="48sp"
+        android:textStyle="bold" />
 </FrameLayout>

@@ -30,9 +30,9 @@ android {
 }
 
 dependencies {
-    implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
-    implementation("org.eclipse.paho:org.eclipse.paho.android.service:1.1.1")
+    implementation("io.socket:socket.io-client:2.1.0") {
+        exclude("org.json", "json")
+    }
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.1.0")
 }

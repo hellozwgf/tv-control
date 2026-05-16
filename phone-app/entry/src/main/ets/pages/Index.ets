@@ -1,4 +1,4 @@
-import { MqttService } from '../service/MqttService';
+import { WebSocketService } from '../service/WebSocketService';
 import { TvState, TvStatus } from '../model/Types';
 import router from '@ohos.router';
 
@@ -8,29 +8,33 @@ struct Index {
   @State tvStatus: TvStatus = TvStatus.OFFLINE;
   @State isLocked: boolean = false;
   @State isConnected: boolean = false;
-  private mqttService: MqttService | null = null;
+  private wsService: WebSocketService | null = null;
 
   aboutToAppear() {
-    const deviceId = AppStorage.get<string>('deviceId') || '';
-    if (!deviceId) {
+    const prefs = new Map<string, string>();
+    // 从 PersistentStorage 读取 authToken
+    const authToken = AppStorage.get<string>('authToken') || '';
+    if (!authToken) {
       router.replaceUrl({ url: 'pages/Pairing' });
       return;
     }
 
-    this.mqttService = new MqttService(deviceId);
-    this.mqttService.onStatusUpdate = (status) => {
+    this.wsService = new WebSocketService(authToken);
+    this.wsService.onStatusUpdate = (status) => {
       this.tvStatus = status;
       this.isLocked = (status === TvStatus.LOCKED);
     };
-    this.mqttService.onConnectionChange = (connected) => {
+    this.wsService.onConnectionChange = (connected) => {
       this.isConnected = connected;
     };
-    this.mqttService.connect();
+    this.wsService.connect();
   }
 
   build() {
     Stack() {
+      // 背景
       Column() {
+        // 顶部状态栏
         Row() {
           Circle()
             .width(12).height(12)
@@ -45,6 +49,7 @@ struct Index {
         Text(this.tvStatus === TvStatus.UNLOCKED ? '电视可正常观看' : '电视已暂停')
           .fontSize(16).fontColor(Color.Gray).margin({ top: 8 })
 
+        // 大控制按钮
         Button(this.isLocked ? '打开电视' : '关闭电视')
           .width(200).height(200)
           .borderRadius(100)
@@ -53,12 +58,13 @@ struct Index {
           .margin({ top: 60 })
           .onClick(() => {
             if (this.isLocked) {
-              this.mqttService?.setState(TvState.OPEN);
+              this.wsService?.setState(TvState.OPEN);
             } else {
-              this.mqttService?.setState(TvState.CLOSED);
+              this.wsService?.setState(TvState.CLOSED);
             }
           })
 
+        // 临时解锁按钮（锁定状态下显示）
         if (this.isLocked) {
           Button('临时解锁 5 分钟')
             .width(200).height(48)
@@ -67,7 +73,7 @@ struct Index {
             .fontSize(16).fontColor(Color.White)
             .margin({ top: 24 })
             .onClick(() => {
-              this.mqttService?.requestUnlock(5);
+              this.wsService?.requestUnlock(5);
             })
         }
       }
@@ -79,6 +85,6 @@ struct Index {
   }
 
   aboutToDisappear() {
-    this.mqttService?.disconnect();
+    this.wsService?.disconnect();
   }
 }

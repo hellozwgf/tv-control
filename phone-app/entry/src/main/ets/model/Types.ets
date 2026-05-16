@@ -12,4 +12,12 @@ export enum TvStatus {
 
 export interface DeviceInfo {
   deviceId: string;
+  authToken: string;
+}
+
+export interface ServerMessage {
+  type: string;
+  state?: TvState;
+  status?: TvStatus;
+  message?: string;
 }
