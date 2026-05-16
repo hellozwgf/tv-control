@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: tv-control
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node src/index.js
+    plan: free
+    healthCheckPath: /health
