@@ -6,12 +6,15 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import androidx.core.app.NotificationCompat
 
 class LockService : Service() {
-    private var wsClient: WebSocketClient? = null
+    private var mqttManager: MqttManager? = null
     private var isLocked = false
+    private val handler = Handler(Looper.getMainLooper())
 
     override fun onCreate() {
         super.onCreate()
@@ -22,36 +25,31 @@ class LockService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val prefs = getSharedPreferences("tv_control", MODE_PRIVATE)
-        val authToken = prefs.getString("auth_token", null) ?: return START_STICKY
         val deviceId = prefs.getString("device_id", null) ?: return START_STICKY
-        val serverUrl = prefs.getString("server_url", "http://YOUR_SERVER_IP:3000") ?: return START_STICKY
 
-        wsClient = WebSocketClient(serverUrl, authToken, deviceId)
+        mqttManager = MqttManager(this, deviceId)
 
-        wsClient?.setOnConnected {
-            // 查询当前状态
-            wsClient?.queryState()
+        mqttManager?.onConnected {
+            // 连接成功后上报在线状态
+            mqttManager?.publishStatus("online")
         }
 
-        wsClient?.setOnStateUpdate { state ->
-            when (state) {
-                "closed" -> lock()
-                "open" -> unlock()
+        mqttManager?.onStateUpdate { message ->
+            when {
+                message == "closed" -> lock()
+                message == "open" -> unlock()
+                message.startsWith("unlock:") -> {
+                    val minutes = message.substringAfter("unlock:").toIntOrNull() ?: 5
+                    unlock()
+                    // 到期自动锁定
+                    handler.postDelayed({
+                        lock()
+                    }, minutes * 60000L)
+                }
             }
         }
 
-        wsClient?.setOnUnlock { expiresAt ->
-            // 临时解锁，到期自动锁定
-            unlock()
-            val delay = expiresAt - System.currentTimeMillis()
-            if (delay > 0) {
-                android.os.Handler(mainLooper).postDelayed({
-                    lock()
-                }, delay)
-            }
-        }
-
-        wsClient?.connect()
+        mqttManager?.connect()
         return START_STICKY
     }
 
@@ -62,20 +60,22 @@ class LockService : Service() {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         startActivity(intent)
-        wsClient?.reportStatus("locked")
+        mqttManager?.publishStatus("locked")
     }
 
     private fun unlock() {
         if (!isLocked) return
         isLocked = false
-        // LockActivity 会自行 finish
-        wsClient?.reportStatus("unlocked")
+        handler.removeCallbacksAndMessages(null)
+        mqttManager?.publishStatus("unlocked")
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
-        wsClient?.disconnect()
+        mqttManager?.publishStatus("offline")
+        mqttManager?.disconnect()
+        handler.removeCallbacksAndMessages(null)
         super.onDestroy()
     }
 

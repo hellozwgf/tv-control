@@ -32,10 +32,8 @@ struct Pairing {
             this.statusMessage = '请输入完整的配对码（如 TV-4821）';
             return;
           }
-          // 配对逻辑——通过 WebSocket 发送配对请求
-          this.statusMessage = '配对中...';
-          // 配对成功后跳转到主页
-          AppStorage.setOrCreate('authToken', 'xxx');
+          // 保存设备ID，跳转到主页
+          AppStorage.setOrCreate('deviceId', this.pairingCode);
           router.replaceUrl({ url: 'pages/Index' });
         })
     }
