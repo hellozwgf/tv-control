@@ -1,0 +1,9 @@
+<!-- tv-app/app/src/main/res/xml/device_admin.xml -->
+<?xml version="1.0" encoding="utf-8"?>
+<device-admin>
+    <uses-policies>
+        <limit-password />
+        <watch-login />
+        <force-lock />
+    </uses-policies>
+</device-admin>

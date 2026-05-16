@@ -1,0 +1,14 @@
+{
+  "app": {
+    "bundleName": "com.tvcontrol.app",
+    "vendor": "tvcontrol",
+    "version": {
+      "code": 1,
+      "name": "1.0.0"
+    },
+    "apiVersion": {
+      "compatible": 11,
+      "target": 11
+    }
+  }
+}
